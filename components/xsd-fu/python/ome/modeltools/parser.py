@@ -12,6 +12,29 @@ class Attribute:
     def uri(self):
         return self.schema.uri()
 
+class ElementReference:
+    def __init__(self, element, xmlelement):
+        self.schema = schema
+        self.name = name
+        self.xmlelement = xmlelement
+        self.attribute_map = {}
+
+    def process_attributes(self):
+        print "H1: ATTRS for %s" % (self.name)
+        for e in list(self.xmlelement):
+            print "  CHILD: %s" % (e.tag) 
+        for attr in self.xmlelement.findall('{http://www.w3.org/2001/XMLSchema}complexType/{http://www.w3.org/2001/XMLSchema}attribute'):
+            print "H2"
+            name = attr.attrib['name']
+            print "PARSE_ATTR1 %s" % (name)
+            newattrib = Attribute(self, name, attr)
+            
+            self.add_attribute(newattr)
+        
+    def add_attribute(self, attribute):
+        if attribute.name not in self.attribute_map.keys():
+            self.attribute_map[attribute.name] = attribute
+
 class Element:
     def __init__(self, schema, name, xmlelement):
         self.schema = schema
@@ -65,10 +88,11 @@ class Schema:
         # Find all xml:element elements
         for elem in self.root.findall('.//{http://www.w3.org/2001/XMLSchema}element'):
             print "PARSE_ELEMENT1 %s = %s" % (elem.tag, ",".join(elem.keys()))
-            name = elem.attrib['name']
-            newelem = Element(self, name, elem)
-            
-            self.add_element(newelem)
+            # Only process real elements, not references.
+            if 'name' in elem.attrib:
+                name = elem.attrib['name']
+                newelem = Element(self, name, elem)            
+                self.add_element(newelem)
 
     def process_attributes(self):
         # Add element attributes
