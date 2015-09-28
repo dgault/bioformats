@@ -21,9 +21,7 @@ class ElementReference:
 
     def process_attributes(self):
         print "H1: ATTRS for %s" % (self.name)
-        for e in list(self.xmlelement):
-            print "  CHILD: %s" % (e.tag) 
-        for attr in self.xmlelement.findall('{http://www.w3.org/2001/XMLSchema}complexType/{http://www.w3.org/2001/XMLSchema}attribute'):
+        for attr in self.xmlelement.findall('./{http://www.w3.org/2001/XMLSchema}complexType/{http://www.w3.org/2001/XMLSchema}attribute'):
             print "H2"
             name = attr.attrib['name']
             print "PARSE_ATTR1 %s" % (name)
@@ -47,15 +45,13 @@ class Element:
 
     def process_attributes(self):
         print "H1: ATTRS for %s" % (self.name)
-        for e in list(self.xmlelement):
-            print "  CHILD: %s" % (e.tag) 
-        for attr in self.xmlelement.findall('.//{http://www.w3.org/2001/XMLSchema}.//attribute/'):
+        for attr in self.xmlelement.findall('{http://www.w3.org/2001/XMLSchema}complexType/{http://www.w3.org/2001/XMLSchema}attribute'):
             print "H2"
             name = attr.attrib['name']
             print "PARSE_ATTR1 %s" % (name)
             newattrib = Attribute(self, name, attr)
             
-            self.add_attribute(newattr)
+            self.add_attribute(newattrib)
         
     def add_attribute(self, attribute):
         if attribute.name not in self.attribute_map.keys():
