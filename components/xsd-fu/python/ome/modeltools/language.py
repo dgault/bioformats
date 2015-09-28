@@ -60,14 +60,6 @@ class Language(object):
             'PercentFraction': 'PercentFraction',
             'Color': 'Color',
             'Text': 'Text',
-            'UnitsLength':            'UnitsLength',
-            'UnitsTime':              'UnitsTime',
-            'UnitsPressure':          'UnitsPressure',
-            'UnitsAngle':             'UnitsAngle',
-            'UnitsTemperature':       'UnitsTemperature',
-            'UnitsElectricPotential': 'UnitsElectricPotential',
-            'UnitsPower':             'UnitsPower',
-            'UnitsFrequency':         'UnitsFrequency',
             namespace + 'dateTime':   'Timestamp'
             }
 
@@ -262,6 +254,7 @@ class Java(Language):
         return "AbstractOMEModelObject"
 
     def typeToUnitsType(self, valueType):
+        print "UNIT: %s" % (valueType) 
         return self.model_unit_map[valueType]
 
     def typeToDefault(self, valueType):

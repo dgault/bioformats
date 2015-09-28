@@ -10,6 +10,8 @@ import generateDS.generateDS
 from ome.modeltools.exceptions import ModelProcessingError
 from xml import sax
 from ome.modeltools.model import OMEModel
+from ome.modeltools.parser import SchemaSet
+import json
 
 XschemaHandler = generateDS.generateDS.XschemaHandler
 set_type_constants = generateDS.generateDS.set_type_constants
@@ -34,8 +36,11 @@ def parse(opts):
     parser.setContentHandler(ch)
     for filename in filenames:
         parser.parse(filename)
+    newparser = SchemaSet(filenames)
+    newparser.process()
 
     root = ch.getRoot()
+#    json.dumps(OMEModel.process(ch, opts), sort_keys=True)
     if root is None:
         raise ModelProcessingError(
             "No model objects found, have you set the correct namespace?")
