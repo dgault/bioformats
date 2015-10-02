@@ -1,13 +1,43 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import xml.etree.ElementTree as ET
+import re
+import sys
+import codecs
+
+if sys.stdout.encoding is None:
+    writer = codecs.getwriter("utf-8")
+    sys.stdout = writer(sys.stdout)
+
+def get_documentation(xmlelement):
+    doc = xmlelement.find('./{http://www.w3.org/2001/XMLSchema}annotation/{http://www.w3.org/2001/XMLSchema}documentation')
+    if doc != None:
+        return re.sub("^\s+", "", doc.text, flags=re.MULTILINE)
 
 class Attribute:
     def __init__(self, element, name, xmlelement):
         self.element = element
         self.name = name
         self.xmlelement = xmlelement
+        self.documentation = get_documentation(xmlelement)
 
-        self.attribute_type = xmlelement.attrib['type']
-        self.use = xmlelement.attrib['use']
+        print("ATTR: %s" % (self.name))
+
+        self.attribute_type = None
+        try:
+            self.attribute_type = xmlelement.attrib['type']
+        except:
+            pass
+
+        self.use = None
+        try:
+            self.use = xmlelement.attrib['use']
+        except:
+            pass
+
+        if self.documentation is not None:
+            print("DOC for ATTR %s is %s" % (self.name, self.documentation))
 
     def uri(self):
         return self.schema.uri()
@@ -20,11 +50,11 @@ class ElementReference:
         self.attribute_map = {}
 
     def process_attributes(self):
-        print "H1: ATTRS for %s" % (self.name)
+        print("H1: ATTRS for %s" % (self.name))
         for attr in self.xmlelement.findall('./{http://www.w3.org/2001/XMLSchema}complexType/{http://www.w3.org/2001/XMLSchema}attribute'):
-            print "H2"
+            print("H2")
             name = attr.attrib['name']
-            print "PARSE_ATTR1 %s" % (name)
+            print("PARSE_ATTR1 %s" % (name))
             newattrib = Attribute(self, name, attr)
             
             self.add_attribute(newattr)
@@ -38,17 +68,21 @@ class Element:
         self.schema = schema
         self.name = name
         self.xmlelement = xmlelement
+        self.documentation = get_documentation(xmlelement)
         self.attribute_map = {}
+
+        if self.documentation is not None:
+            print("DOC for ELEM %s is %s" % (self.name, self.documentation))
 
     def uri(self):
         return self.schema.uri()
 
     def process_attributes(self):
-        print "H1: ATTRS for %s" % (self.name)
+        print("H1: ATTRS for %s" % (self.name))
         for attr in self.xmlelement.findall('{http://www.w3.org/2001/XMLSchema}complexType/{http://www.w3.org/2001/XMLSchema}attribute'):
-            print "H2"
+            print("H2")
             name = attr.attrib['name']
-            print "PARSE_ATTR1 %s" % (name)
+            print("PARSE_ATTR1 %s" % (name))
             newattrib = Attribute(self, name, attr)
             
             self.add_attribute(newattrib)
@@ -72,18 +106,18 @@ class Schema:
         # Find and validate all xsd:import elements; throw if any import is missing
         for imp in self.root.findall('{http://www.w3.org/2001/XMLSchema}import'):
             ns = imp.attrib['namespace']
-            print "IMPORT %s" % (ns)
+            print("IMPORT %s" % (ns))
             try:
                 self.schemaset.schema(ns)
             except KeyError as e:
                 if ns != 'http://www.w3.org/XML/1998/namespace':
-                    print "XML schema for namespace %s not registered" % (ns)
+                    print("XML schema for namespace %s not registered" % (ns))
                     raise e
 
     def process_elements(self):
         # Find all xml:element elements
         for elem in self.root.findall('.//{http://www.w3.org/2001/XMLSchema}element'):
-            print "PARSE_ELEMENT1 %s = %s" % (elem.tag, ",".join(elem.keys()))
+            print("PARSE_ELEMENT1 %s = %s" % (elem.tag, ",".join(elem.keys())))
             # Only process real elements, not references.
             if 'name' in elem.attrib:
                 name = elem.attrib['name']
@@ -105,7 +139,7 @@ class SchemaSet:
         self.schema_map = {}
         self.element_map = {}
 
-        print "NEWSCHEMA: Adding %s" % (', '.join(filenames))
+        print("NEWSCHEMA: Adding %s" % (', '.join(filenames)))
         for filename in filenames:
             self.add_schema(filename)
 
@@ -115,8 +149,8 @@ class SchemaSet:
         if newuri not in self.schema_map.keys():
             self.schema_map[newuri] = newschema
         else:
-            print "Skipping %s (%s): Schema already registered as %s" % \
-                (filename, newuri, schema(newuri).filename)
+            print("Skipping %s (%s): Schema already registered as %s" %
+                  (filename, newuri, schema(newuri).filename))
 
     def process(self):
         for schema in self.schema_map.values():
