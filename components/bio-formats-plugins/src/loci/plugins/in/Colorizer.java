@@ -164,36 +164,7 @@ public class Colorizer {
       final boolean doComposite = !options.isViewStandard() &&
         mode != -1 && cSize > 1 && cSize <= 7;
       if (doComposite) {
-        final ImagePlus toClose = imp;
-        CompositeImage compImage = new CompositeImage(imp, mode) {
-          @Override
-          public void close() {
-            super.close();
-            toClose.close();
-          }
-
-          @Override
-          public void show(String message) {
-            super.show(message);
-
-            // ensure that the display settings are consistent across channels
-            // autoscaling takes care of this for non-virtual stacks
-            // see ticket #12267
-            if (toClose instanceof VirtualImagePlus) {
-              int channel = getChannel();
-              double min = getDisplayRangeMin();
-              double max = getDisplayRangeMax();
-
-              for (int c=0; c<cSize; c++) {
-                setPositionWithoutUpdate(c + 1, getSlice(), getFrame());
-                setDisplayRange(min, max);
-              }
-              reset();
-              setPosition(channel, getSlice(), getFrame());
-            }
-          }
-
-        };
+        ColorizerComposite compImage = new ColorizerComposite(imp, mode);
         compImage.setProperty(ImagePlusReader.PROP_SERIES, series);
         if (luts != null) compImage.setLuts(luts);
         imps.set(i, compImage);
@@ -298,9 +269,9 @@ public class Colorizer {
     }
 
     // apply display ranges
-    if (imp instanceof CompositeImage) {
+    if (imp instanceof ColorizerComposite) {
       // apply channel display ranges
-      final CompositeImage compImage = (CompositeImage) imp;
+      final ColorizerComposite compImage = (ColorizerComposite) imp;
       for (int c=0; c<cSize; c++) {
         LUT lut = compImage.getChannelLut(c + 1);
         // NB: Uncalibrate values before assigning to LUT min/max.
