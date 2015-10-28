@@ -47,6 +47,7 @@
 #include <cstring>
 #include <map>
 #include <stdexcept>
+#include <iostream>
 
 namespace fs = boost::filesystem;
 
@@ -306,6 +307,7 @@ namespace ome
             {
               fs::path moduledir(module.parent_path());
               bool match = true;
+			  std::cerr << "MODULEDIR: " << moduledir << '\n';
 
 #ifdef _MSC_VER
               fs::path libdir(INSTALL_BINDIR);
