@@ -323,7 +323,7 @@ public class FluoviewReader extends BaseTiffReader {
         }
         
         ArrayList<Double> uniqueZ = new ArrayList<Double>();
-        if (i > 1) {
+        if (i > 1 && stamps != null) {
           double[] zPositions = stamps[i - 2];
           for (Double z : zPositions) {
             BigDecimal bd = new BigDecimal(z);
