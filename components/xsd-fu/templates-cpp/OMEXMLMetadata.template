@@ -77,7 +77,7 @@ OMEXMLMetadata::${getPropMethod(is_multi_path[o.name], parent, obj.name, prop.na
         // Parents: ${repr(parents[obj.name])}
 {% choose %}\
 {% when is_abstract(parent) and prop.isReference and prop.maxOccurs > 1 %}\
-        // ${parent} is abstract proprietary, is reference and occurs more than once
+        // ${parent} is abstract, is reference and occurs more than once
         // ${obj.name} o = (${obj.name}) root.${".".join(accessor(obj.name, parent, prop)[:-1])};
         // return o.getLinked${prop.methodName}(${index_name_string(prop.name)}).getID();
         // DUMMYLINE
@@ -89,7 +89,7 @@ OMEXMLMetadata::${getPropMethod(is_multi_path[o.name], parent, obj.name, prop.na
                                 "Internal metadata store inconsistency: null object");
 {% end %}\
 {% when is_abstract(parent) and prop.isReference %}\
-        // ${parent} is abstract proprietary
+        // ${parent} is abstract
         ome::compat::shared_ptr< ${obj.langTypeNS}> o = ome::compat::dynamic_pointer_cast< ${obj.langTypeNS}>(${safe_accessor(['root']+accessor(obj.name, parent, prop)[:-1], getPropMethod(is_multi_path[o.name], parent, obj.name, prop.name))});
         ${prop.assignableType[' const']} ret(o->getLinked${prop.methodName}().lock());
         if (ret)
@@ -98,7 +98,7 @@ OMEXMLMetadata::${getPropMethod(is_multi_path[o.name], parent, obj.name, prop.na
                                 "Internal metadata store inconsistency: null object");
 {% end %}\
 {% when is_abstract(parent) %}\
-        // ${parent} is abstract proprietary and not a reference
+        // ${parent} is abstract and not a reference
         ome::compat::shared_ptr< ${obj.langTypeNS}> o = ome::compat::dynamic_pointer_cast< ${obj.langTypeNS}>(${safe_accessor(['root']+accessor(obj.name, parent, prop)[:-1], getPropMethod(is_multi_path[o.name], parent, obj.name, prop.name))});
 {% if prop.minOccurs == 0 %}\
         ${prop.retType[' const']} ret = o->get${prop.methodName}();
@@ -243,17 +243,17 @@ OMEXMLMetadata::${getPropMethod(is_multi_path[o.name], parent, obj.name, prop.na
         // Parents: ${repr(parents[obj.name])}
 {% choose %}\
 {% when is_abstract(parent) and prop.isReference %}\
-        // ${prop.name} is abstract proprietary and is a reference
+        // ${prop.name} is abstract and is a reference
         ome::compat::shared_ptr< ${prop.instanceTypeNS}> ${prop.instanceVariableName}_reference(ome::compat::make_shared< ${prop.instanceTypeNS}>());
         ${prop.instanceVariableName}_reference->setID(${prop.argumentName});
         ome::compat::shared_ptr< ::${lang.omexml_model_package}::OMEModelObject> o_base(ome::compat::static_pointer_cast< ::${lang.omexml_model_package}::OMEModelObject>(${safe_accessor(['root']+accessor(obj.name, parent, prop)[:-1], setPropMethod(is_multi_path[o.name], parent, obj.name, prop.name))}));
         ome::compat::shared_ptr< ::${lang.omexml_model_package}::Reference> ref(ome::compat::static_pointer_cast< ::${lang.omexml_model_package}::Reference>(${prop.instanceVariableName}_reference));
 
         model->addReference(o_base, ref);
-        // ${parent} is abstract proprietary
+        // ${parent} is abstract
 {% end %}\
 {% when is_abstract(parent) %}\
-        // ${parent} is abstract proprietary and not a reference
+        // ${parent} is abstract and not a reference
 {% for i, v in enumerate(accessor(obj.name, parent, prop, accessor_string_complex)[:-1]) %}\
 {% choose %}\
 {% when v['level'] == 2 %}\
@@ -320,7 +320,7 @@ OMEXMLMetadata::${getPropMethod(is_multi_path[o.name], parent, obj.name, prop.na
     model->addReference(modelObject, ref);
 {% end %}\
 {% when obj.isConcreteSubstitution or obj.isAbstractSubstitution %}\
-        // ${obj.parentName} is abstract proprietary
+        // ${obj.parentName} is abstract
 
 {% for i, v in enumerate(accessor(obj.name, o.topLevelName, prop, accessor_string_complex)) %}\
 {% choose %}\
@@ -449,7 +449,7 @@ ${customContent[obj.name][prop.name]}
   def is_abstract(name):
     o = model.getObjectByName(name)
     if o is not None and \
-        (o.isAbstract or o.isAbstractProprietary):
+        (o.isAbstract):
       return True
     return False
 
@@ -829,42 +829,6 @@ namespace ome
 {% end source %}\
 {% end %}\
 {% end %}\
-{% if len(model.opts.lang.getSubstitutionTypes()) == 0 %}\
-{% if fu.SOURCE_TYPE == "header" %}\
-        // Documented in base class.
-        const std::string&
-        getLightSourceType(index_type instrumentIndex,
-                           index_type lightSourceIndex) const;
-{% end header %}\
-{% if fu.SOURCE_TYPE == "source" %}\
-      const std::string&
-      OMEXMLMetadata::getLightSourceType(index_type instrumentIndex,
-                                         index_type lightSourceIndex) const
-      {
-        const char * const instrument_method("getLightSourceType [getInstrument]");
-        ome::compat::shared_ptr<const ::${lang.omexml_model_package}::LightSource> o = safe_fetch(root->getInstrument(instrumentIndex), instrument_method)->getLightSource(lightSourceIndex);
-        return o->getLightSourceType();
-      }
-{% end source %}\
-
-{% if fu.SOURCE_TYPE == "header" %}\
-        // Documented in base class.
-        const std::string&
-        getShapeType(index_type roiIndex,
-                     index_type shapeIndex) const;
-{% end header %}\
-{% if fu.SOURCE_TYPE == "source" %}\
-      const std::string&
-      OMEXMLMetadata::getShapeType(index_type roiIndex,
-                                   index_type shapeIndex) const
-      {
-        const char * const roi_method("getShapeType [getROI]");
-        const char * const union_method("getShapeType [getUnion]");
-        const char * const shape_method("getShapeType [getShape]");
-        return safe_fetch(safe_fetch(safe_fetch(root->getROI(roiIndex), roi_method)->getUnion(), union_method)->getShape(shapeIndex), shape_method)->getShapeType();
-      }
-{% end source %}\
-{% end %}\
 {% if debug %}\
         // -- Entity counting (manual definitions) --
 
@@ -1167,7 +1131,7 @@ ${counter(k, o, v)}\
 
 {% for o in sorted(model.objects.values(), lambda x, y: cmp(x.name, y.name)) %}\
 {% if o.name not in fu.METADATA_OBJECT_IGNORE %}\
-{% if (parents[o.name] is not None and not o.isAbstract and not o.isAbstractProprietary) or o.isConcreteSubstitution %}\
+{% if (parents[o.name] is not None and not o.isAbstract) or o.isConcreteSubstitution %}\
 {% if fu.SOURCE_TYPE == "header" %}\
 {% if debug %}\
         //
@@ -1302,7 +1266,7 @@ ${getter(k, o, prop, v)}\
 
 {% for o in sorted(model.objects.values(), lambda x, y: cmp(x.name, y.name)) %}\
 {% if o.name not in fu.METADATA_OBJECT_IGNORE %}\
-{% if (parents[o.name] is not None and not o.isAbstract and not o.isAbstractProprietary) or o.isConcreteSubstitution %}\
+{% if (parents[o.name] is not None and not o.isAbstract) or o.isConcreteSubstitution %}\
 {% if fu.SOURCE_TYPE == "header" %}\
 {% if debug %}\
         //

@@ -258,7 +258,7 @@ class OMEModel(object):
                     prop.delegate.cleanName = abstractName
                 if not prop.isReference and (
                         prop.isAttribute or prop.maxOccurs == 1 or
-                        o.name == 'OME' or o.isAbstractProprietary):
+                        o.name == 'OME' or o.isAbstract):
                     continue
                 shortName = config.REF_REGEX.sub('', prop.type)
                 try:
