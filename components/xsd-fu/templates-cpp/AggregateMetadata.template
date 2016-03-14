@@ -671,11 +671,11 @@ namespace ome
 {% if fu.SOURCE_TYPE == "header" %}\
         // Documented in base class.
         index_type
-        get${abstractClass}Count(${indexes_string(v)}) const;
+        get${abstractClass}Count(${indexes_string(v[:-1])}) const;
 {% end header %}\
 {% if fu.SOURCE_TYPE == "source" %}\
       AggregateMetadata::index_type
-      AggregateMetadata::get${abstractClass}Count(${indexes_string(v)}) const;
+      AggregateMetadata::get${abstractClass}Count(${indexes_string(v[:-1])}) const;
       {
         for (delegate_list_type::const_iterator i = delegates.begin();
              i != delegates.end();
@@ -683,7 +683,7 @@ namespace ome
           {
             ome::compat::shared_ptr<MetadataRetrieve> retrieve = ome::compat::dynamic_pointer_cast<MetadataRetrieve>(*i);
             if (retrieve)
-              return retrieve->get${abstractClass}Count(${indexes_name_string(v)});
+              return retrieve->get${abstractClass}Count(${indexes_name_string(v[:-1])});
           }
         throw MetadataException("AggregateMetadata", "get${abstractClass}Count",
                                 "no delegate MetadataRetrieve implementation");

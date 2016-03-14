@@ -363,7 +363,7 @@ namespace ome
          * @return the number of ${abstractClass} elements.
          */
         virtual index_type
-        get${abstractClass}Count(${indexes_string(v)}) const = 0;
+        get${abstractClass}Count(${indexes_string(v[:-1])}) const = 0;
 
 {% end %}\
 {% end %}\

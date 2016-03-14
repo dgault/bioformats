@@ -472,11 +472,11 @@ namespace ome
 {% if fu.SOURCE_TYPE == "header" %}\
         // Documented in base class.
         index_type
-        get${abstractClass}Count(${indexes_string(v)}) const;
+        get${abstractClass}Count(${indexes_string(v[:-1])}) const;
 {% end header %}\
 {% if fu.SOURCE_TYPE == "source" %}\
       AggregateMetadata::index_type
-      AggregateMetadata::get${abstractClass}Count(${indexes_string(v)}) const;
+      AggregateMetadata::get${abstractClass}Count(${indexes_string(v[:-1])}) const;
       {
         throw MetadataException("AggregateMetadata", "get${abstractClass}Count",
                                 "intentionally not implemented");
