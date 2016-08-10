@@ -84,8 +84,10 @@ public class Configuration {
   private static final String IS_LITTLE_ENDIAN = "LittleEndian";
   private static final String MD5 = "MD5";
   private static final String ALTERNATE_MD5 = "Alternate_MD5";
+  private static final String WINDOWS_MD5 = "Windows_MD5";
   private static final String TILE_MD5 = "Tile_MD5";
   private static final String TILE_ALTERNATE_MD5 = "Tile_Alternate_MD5";
+  private static final String TILE_WINDOWS_MD5 = "Tile_Windows_MD5";
   private static final String PHYSICAL_SIZE_X = "PhysicalSizeX";
   private static final String PHYSICAL_SIZE_X_UNIT = "PhysicalSizeXUnit";
   private static final String PHYSICAL_SIZE_Y = "PhysicalSizeY";
@@ -247,6 +249,10 @@ public class Configuration {
   public String getAlternateMD5() {
     return currentTable.get(ALTERNATE_MD5);
   }
+  
+  public String getWindowsMD5() {
+    return currentTable.get(WINDOWS_MD5);
+  }
 
   public String getTileMD5() {
     return currentTable.get(TILE_MD5);
@@ -254,6 +260,10 @@ public class Configuration {
 
   public String getTileAlternateMD5() {
     return currentTable.get(TILE_ALTERNATE_MD5);
+  }
+  
+  public String getTileWindowsMD5() {
+    return currentTable.get(TILE_WINDOWS_MD5);
   }
 
   public Length getPhysicalSizeX() {

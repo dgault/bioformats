@@ -1910,11 +1910,11 @@ public class FormatReaderTest {
           String md5 = TestTools.md5(resolutionReader.openBytes(0));
           String expected1 = config.getMD5();
           String expected2 = config.getAlternateMD5();
-
-          if (expected1 == null && expected2 == null) {
+          String expected3 = config.getWindowsMD5();
+          if (expected1 == null && expected2 == null && expected3 == null) {
             continue;
           }
-          if (!md5.equals(expected1) && !md5.equals(expected2)) {
+          if (!md5.equals(expected1) && !md5.equals(expected2) && !md5.equals(expected3)) {
             success = false;
             msg = "series " + i + ", resolution " + r;
           }
@@ -1963,11 +1963,12 @@ public class FormatReaderTest {
         String md5 = TestTools.md5(reader.openBytes(0));
         String expected1 = config.getMD5();
         String expected2 = config.getAlternateMD5();
+        String expected3 = config.getWindowsMD5();
 
-        if (expected1 == null && expected2 == null) {
+        if (expected1 == null && expected2 == null && expected3 == null) {
           continue;
         }
-        if (!md5.equals(expected1) && !md5.equals(expected2)) {
+        if (!md5.equals(expected1) && !md5.equals(expected2) && !md5.equals(expected3)) {
           success = false;
           msg = "series " + i + " (" + md5 + ")";
         }
@@ -2053,6 +2054,7 @@ public class FormatReaderTest {
 
           String expected1 = config.getTileMD5();
           String expected2 = config.getTileAlternateMD5();
+          String expected3 = config.getTileWindowsMD5();
 
           String md5 = null;
 
@@ -2067,11 +2069,11 @@ public class FormatReaderTest {
             LOGGER.warn("", e);
           }
 
-          if (md5 == null && expected1 == null && expected2 == null) {
+          if (md5 == null && expected1 == null && expected2 == null && expected3 == null) {
             success = true;
           }
-          else if (!md5.equals(expected1) && !md5.equals(expected2) &&
-            (expected1 != null || expected2 != null))
+          else if (!md5.equals(expected1) && !md5.equals(expected2) && !md5.equals(expected3) &&
+            (expected1 != null || expected2 != null || expected3 != null))
           {
             success = false;
             msg = "series " + i + ", resolution " + r;
@@ -2106,6 +2108,7 @@ public class FormatReaderTest {
 
         String expected1 = config.getTileMD5();
         String expected2 = config.getTileAlternateMD5();
+        String expected3 = config.getTileWindowsMD5();
 
         String md5 = null;
 
@@ -2120,11 +2123,11 @@ public class FormatReaderTest {
           throw e;
         }
 
-        if (md5 == null && expected1 == null && expected2 == null) {
+        if (md5 == null && expected1 == null && expected2 == null && expected3 == null) {
           success = true;
         }
-        else if (!md5.equals(expected1) && !md5.equals(expected2) &&
-          (expected1 != null || expected2 != null))
+        else if (!md5.equals(expected1) && !md5.equals(expected2) && !md5.equals(expected3) &&
+          (expected1 != null || expected2 != null || expected3 != null))
         {
           success = false;
           msg = "series " + i + " (" + md5 + ")";
