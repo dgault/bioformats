@@ -163,6 +163,11 @@ public class ZeissCZIReader extends FormatReader {
   private transient DocumentBuilder parser;
 
   private ArrayList<Attachment> extraImages = new ArrayList<Attachment>();
+<<<<<<< HEAD
+=======
+  private int[] tileWidth;
+  private int[] tileHeight;
+>>>>>>> openmicroscopy/develop
 
   // -- Constructor --
 
@@ -481,6 +486,7 @@ public class ZeissCZIReader extends FormatReader {
       parser = null;
       extraImages.clear();
       maxResolution = 0;
+<<<<<<< HEAD
     }
   }
 
@@ -504,6 +510,28 @@ public class ZeissCZIReader extends FormatReader {
         int res = (int) Math.pow(2, plane.resolutionIndex);
         return plane.y / res;
       }
+=======
+      tileWidth = null;
+      tileHeight = null;
+>>>>>>> openmicroscopy/develop
+    }
+    return super.getOptimalTileHeight();
+  }
+
+  /* @see loci.formats.IFormatReader#getOptimalTileWidth() */
+  @Override
+  public int getOptimalTileWidth() {
+    if (tileWidth != null && getCoreIndex() < tileWidth.length) {
+      return tileWidth[getCoreIndex()];
+    }
+    return super.getOptimalTileWidth();
+  }
+
+  /* @see loci.formats.IFormatReader#getOptimalTileHeight() */
+  @Override
+  public int getOptimalTileHeight() {
+    if (tileHeight != null && getCoreIndex() < tileHeight.length) {
+      return tileHeight[getCoreIndex()];
     }
     return super.getOptimalTileHeight();
   }
@@ -606,6 +634,10 @@ public class ZeissCZIReader extends FormatReader {
     if (isRGB()) {
       bpp *= (getSizeC() / originalC);
     }
+<<<<<<< HEAD
+=======
+    int fullResBlockCount = planes.size();
+>>>>>>> openmicroscopy/develop
     for (int i=0; i<planes.size(); i++) {
       long planeSize = (long) planes.get(i).x * planes.get(i).y * bpp;
       if (planes.get(i).directoryEntry.compression == UNCOMPRESSED) {
@@ -619,6 +651,7 @@ public class ZeissCZIReader extends FormatReader {
             (planes.get(i).y % entries[1].storedSize) == 0)
           {
             int scale = planes.get(i).x / entries[0].storedSize;
+<<<<<<< HEAD
             planes.get(i).coreIndex = 0;
             while (scale > 1) {
               scale /= 2;
@@ -626,6 +659,26 @@ public class ZeissCZIReader extends FormatReader {
             }
             if (planes.get(i).coreIndex > maxResolution) {
               maxResolution = planes.get(i).coreIndex;
+=======
+            // resolutions must be a power of 2 smaller than the full resolution
+            // some files will contain power-of-3 resolutions, which need to be ignored
+            if ((scale % 2) == 0) {
+              planes.get(i).coreIndex = 0;
+              while (scale > 1) {
+                scale /= 2;
+                planes.get(i).coreIndex++;
+              }
+              if (planes.get(i).coreIndex > maxResolution) {
+                maxResolution = planes.get(i).coreIndex;
+              }
+            }
+            else {
+              LOGGER.trace(
+               "removing block #{}; calculated size = {}, recorded size = {}, scale = {}",
+                 i, planeSize, size, scale);
+              planes.remove(i);
+              i--;
+>>>>>>> openmicroscopy/develop
             }
           }
           else {
@@ -635,6 +688,10 @@ public class ZeissCZIReader extends FormatReader {
             planes.remove(i);
             i--;
           }
+<<<<<<< HEAD
+=======
+          fullResBlockCount--;
+>>>>>>> openmicroscopy/develop
         }
         else {
           scanDim = (int) (size / planeSize);
@@ -714,8 +771,10 @@ public class ZeissCZIReader extends FormatReader {
     LOGGER.trace("prestitched = {}", prestitched);
     LOGGER.trace("scanDim = {}", scanDim);
 
+    int calculatedSeries = fullResBlockCount / getImageCount();
     if (((mosaics == seriesCount) || (positions == seriesCount)) &&
-      seriesCount == (planes.size() / getImageCount()) &&
+      ((seriesCount == calculatedSeries) ||
+      (maxResolution > 0 && seriesCount * mosaics == calculatedSeries)) &&
       prestitched != null && prestitched)
     {
       boolean equalTiles = true;
@@ -734,9 +793,17 @@ public class ZeissCZIReader extends FormatReader {
         angles = 1;
       }
       else {
-        prestitched = false;
-        ms0.sizeX = planes.get(planes.size() - 1).x;
-        ms0.sizeY = planes.get(planes.size() - 1).y;
+        int newX = planes.get(planes.size() - 1).x;
+        int newY = planes.get(planes.size() - 1).y;
+        if (ms0.sizeX < newX || ms0.sizeY < newY) {
+          prestitched = true;
+          mosaics = 1;
+        }
+        else {
+          prestitched = false;
+        }
+        ms0.sizeX = newX;
+        ms0.sizeY = newY;
       }
     }
 
@@ -783,9 +850,16 @@ public class ZeissCZIReader extends FormatReader {
     }
 
     assignPlaneIndices();
+<<<<<<< HEAD
     calculateSeriesDimensions();
 
     if (maxResolution > 0) {
+=======
+
+    if (maxResolution > 0) {
+      tileWidth = new int[core.size()];
+      tileHeight = new int[core.size()];
+>>>>>>> openmicroscopy/develop
       for (int s=0; s<core.size();) {
         if (originalMosaicCount > 1) {
           // calculate total stitched size if the image was not fused
@@ -814,7 +888,18 @@ public class ZeissCZIReader extends FormatReader {
             if (plane.col > maxCol) {
               maxCol = plane.col;
             }
+<<<<<<< HEAD
           }
+=======
+            if (plane.x > tileWidth[s]) {
+              tileWidth[s] = plane.x;
+            }
+            if (plane.y > tileHeight[s]) {
+              tileHeight[s] = plane.y;
+            }
+          }
+
+>>>>>>> openmicroscopy/develop
           // don't overwrite the dimensions if stitching already occurred
           if (core.get(s).sizeX == x && core.get(s).sizeY == y) {
             core.get(s).sizeX = (core.get(s).sizeX + maxCol) - minCol;
@@ -822,8 +907,16 @@ public class ZeissCZIReader extends FormatReader {
           }
         }
         for (int r=0; r<core.get(s).resolutionCount; r++) {
+<<<<<<< HEAD
           core.get(s + r).sizeX = core.get(s).sizeX / (int) Math.pow(2, r);
           core.get(s + r).sizeY = core.get(s).sizeY / (int) Math.pow(2, r);
+=======
+          int div = (int) Math.pow(2, r);
+          core.get(s + r).sizeX = core.get(s).sizeX / div;
+          core.get(s + r).sizeY = core.get(s).sizeY / div;
+          tileWidth[s + r] = tileWidth[s] / div;
+          tileHeight[s + r] = tileHeight[s] / div;
+>>>>>>> openmicroscopy/develop
         }
         s += core.get(s).resolutionCount;
       }
@@ -997,6 +1090,15 @@ public class ZeissCZIReader extends FormatReader {
         store.setImageName("thumbnail image", i);
       }
 
+<<<<<<< HEAD
+=======
+      // remaining acquisition settings (esp. channels) do not apply to
+      // label and macro images
+      if (extraIndex >= 0) {
+        continue;
+      }
+
+>>>>>>> openmicroscopy/develop
       if (description != null && description.length() > 0) {
         store.setImageDescription(description, i);
       }
@@ -1338,7 +1440,7 @@ public class ZeissCZIReader extends FormatReader {
     LOGGER.trace("assignPlaneIndices:");
     // assign plane and series indices to each SubBlock
 
-    if (getSeriesCount() == mosaics) {
+    if (core.size() == mosaics && maxResolution == 0) {
       LOGGER.trace("  reset position, acquisition, and angle count");
       positions = 1;
       acquisitions = 1;
@@ -3110,6 +3212,10 @@ public class ZeissCZIReader extends FormatReader {
     @Override
     public String toString() {
       return "coreIndex=" + coreIndex + ", planeIndex=" + planeIndex +
+<<<<<<< HEAD
+=======
+        ", resolutionIndex=" + resolutionIndex +
+>>>>>>> openmicroscopy/develop
         ", x=" + x + ", y=" + y + ", row=" + row + ", col=" + col + ", metadata=" + metadata +
         ", attachmentSize=" + attachmentSize + ", directoryEntry=" + directoryEntry;
     }
