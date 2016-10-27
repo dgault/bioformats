@@ -1,29 +1,4 @@
-/*
- * #%L
- * Bio-Formats Plugins for ImageJ: a collection of ImageJ plugins including the
- * Bio-Formats Importer, Bio-Formats Exporter, Bio-Formats Macro Extensions,
- * Data Browser and Stack Slicer.
- * %%
- * Copyright (C) 2006 - 2016 Open Microscopy Environment:
- *   - Board of Regents of the University of Wisconsin-Madison
- *   - Glencoe Software, Inc.
- *   - University of Dundee
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 2 of the 
- * License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public 
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/gpl-2.0.html>.
- * #L%
- */
+
 
 import ij.CompositeImage;
 import ij.IJ;
@@ -34,11 +9,25 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import java.io.IOException;
+
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
 import loci.formats.FormatException;
 import loci.formats.IFormatReader;
+import loci.formats.ImageWriter;
+import loci.formats.in.MetamorphReader;
+import loci.formats.meta.IMetadata;
+import loci.formats.meta.MetadataRetrieve;
+import loci.formats.meta.MetadataStore;
+import loci.formats.out.OMETiffWriter;
+import loci.formats.out.TiffWriter;
+import loci.formats.services.OMEXMLService;
 import loci.plugins.util.ImageProcessorReader;
 import loci.plugins.util.LociPrefs;
+
+import ome.xml.model.primitives.PositiveInteger;
 
 /**
  * An ImageJ plugin that uses Bio-Formats to build up an {@link ImageStack},
@@ -50,14 +39,44 @@ public class Read_Image implements PlugIn {
     String dir = od.getDirectory();
     String name = od.getFileName();
     String id = dir + name;
-    ImageProcessorReader r = new ImageProcessorReader(
-      new ChannelSeparator(LociPrefs.makeImageReader()));
+    MetamorphReader reader = new MetamorphReader();
+
     try {
       IJ.showStatus("Examining file " + name);
-      r.setId(id);
-      int num = r.getImageCount();
-      int width = r.getSizeX();
-      int height = r.getSizeY();
+      ServiceFactory factory = new ServiceFactory();
+      OMEXMLService service = factory.getInstance(OMEXMLService.class);
+      IMetadata omexmlMeta = service.createOMEXMLMetadata();
+      reader.setMetadataStore(omexmlMeta);
+      reader.setId(id);
+      
+      // Modify the size of z and time points 
+      int sizeZ = reader.getSizeZ();
+      int sizeT = reader.getSizeT();
+      omexmlMeta.setPixelsSizeZ(new PositiveInteger(1), 0);
+      omexmlMeta.setPixelsSizeT(new PositiveInteger(sizeZ * sizeT), 0);
+      
+      // Write out the new modified file
+      OMETiffWriter writer = new OMETiffWriter();
+      writer.setMetadataRetrieve(omexmlMeta);
+      IJ.showStatus("Writing file " + dir  + "test_modified.ome.tif");
+      writer.setId(dir  + "test_modified.tif");
+      for (int series=0; series<reader.getSeriesCount(); series++) {
+        reader.setSeries(series);
+        writer.setSeries(series);
+        for (int image=0; image<reader.getImageCount(); image++) {
+          writer.saveBytes(image, reader.openBytes(image));
+        }
+      }
+      writer.close();
+      reader.close();
+      
+      // Open open the modified file in ImageJ
+      ImageProcessorReader r = new ImageProcessorReader(
+          new ChannelSeparator(LociPrefs.makeImageReader()));
+      r.setId(dir  + "test_modified.tif");
+      int num = reader.getImageCount();
+      int width = reader.getSizeX();
+      int height = reader.getSizeY();
       ImageStack stack = new ImageStack(width, height);
       byte[][][] lookupTable = new byte[r.getSizeC()][][];
       for (int i=0; i<num; i++) {
@@ -81,6 +100,12 @@ public class Read_Image implements PlugIn {
     }
     catch (IOException exc) {
       IJ.error("Sorry, an error occurred: " + exc.getMessage());
+    } catch (DependencyException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (ServiceException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
   }
 
