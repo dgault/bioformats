@@ -683,6 +683,8 @@ public final class ImageConverter {
     ifd.put(IFD.TILE_WIDTH, w);
     ifd.put(IFD.TILE_LENGTH, h);
 
+    LOGGER.info("Tile Width originally set to: {};", w);
+
     Long m = null;
     for (int y=0; y<nYTiles; y++) {
       for (int x=0; x<nXTiles; x++) {
@@ -727,6 +729,14 @@ public final class ImageConverter {
             tileX = 0;
           }
         }
+        
+        tileWidth = (int) ifd.getTileWidth();
+        int rowsPerStrip = (int) ifd.getRowsPerStrip()[0];
+        MetadataRetrieve writerMetadata = writer.getMetadataRetrieve();
+        PixelType pixelType = writerMetadata.getPixelsType(outputIndex);
+        int bytesPerPixel = FormatTools.getBytesPerPixel(pixelType.name());
+        int stripSize = rowsPerStrip * tileWidth * bytesPerPixel;
+        LOGGER.info("StripSize: {}; RowsPerStrip: {}; TileWidth: {}; BytesPerPixel: {};", stripSize, rowsPerStrip, tileWidth, bytesPerPixel);
 
         autoscalePlane(buf, index);
         applyLUT(writer);
