@@ -94,12 +94,6 @@ public class TiffWriter extends FormatWriter {
   /** Whether or not to check the parameters passed to saveBytes. */
   protected boolean checkParams = true;
 
-  /** The tile width which will be used for writing. */
-  protected int tileSizeX;
-
-  /** The tile height which will be used for writing. */
-  protected int tileSizeY;
-
   /**
    * Sets the compression code for the specified IFD.
    * 
@@ -218,11 +212,9 @@ public class TiffWriter extends FormatWriter {
     int type = FormatTools.pixelTypeFromString(
         retrieve.getPixelsType(series).toString());
     int index = no;
-    int imageWidth = retrieve.getPixelsSizeX(series).getValue().intValue();
-    int imageHeight = retrieve.getPixelsSizeY(series).getValue().intValue();
     tileSizeX = getTileSizeX();
     tileSizeY = getTileSizeY();
-    if (tileSizeX != imageWidth || tileSizeY != imageHeight) {
+    if (writingTiles()) {
       ifd.put(new Integer(IFD.TILE_WIDTH), new Long(tileSizeX));
       ifd.put(new Integer(IFD.TILE_LENGTH), new Long(tileSizeY));
     }

@@ -41,6 +41,8 @@ import loci.common.DataTools;
 import loci.common.RandomAccessOutputStream;
 import loci.common.Region;
 import loci.formats.codec.CodecOptions;
+import loci.formats.in.DynamicMetadataOptions;
+import loci.formats.in.MetadataOptions;
 import loci.formats.meta.DummyMetadata;
 import loci.formats.meta.MetadataRetrieve;
 
@@ -95,6 +97,15 @@ public abstract class FormatWriter extends FormatHandler
 
   /** Current file. */
   protected RandomAccessOutputStream out;
+  
+  /** The tile width which will be used for writing. */
+  protected int tileSizeX;
+
+  /** The tile height which will be used for writing. */
+  protected int tileSizeY;
+  
+  public static final String TILING_LEGACY_KEY = "tiling.legacy";
+  public static final boolean TILING_LEGACY_DEFAULT = false;
 
   // -- Constructors --
 
@@ -297,7 +308,7 @@ public abstract class FormatWriter extends FormatHandler
   public int getTileSizeX() throws FormatException {
     PositiveInteger width = metadataRetrieve.getPixelsSizeX(getSeries());
     if (width == null) throw new FormatException("Pixels Size X must not be null when attempting to get tile size.");
-    return width.getValue();
+    return getDefaultTileSizeX();
   }
 
   /* @see IFormatWriter#setTileSizeX(int) */
@@ -305,8 +316,8 @@ public abstract class FormatWriter extends FormatHandler
   public int setTileSizeX(int tileSize) throws FormatException {
     PositiveInteger width = metadataRetrieve.getPixelsSizeX(getSeries());
     if (width == null) throw new FormatException("Pixels Size X must not be null when attempting to set tile size.");
-    if (tileSize <= 0) throw new FormatException("Tile size must be > 0.");
-    return width.getValue();
+    if (tileSize < 0) throw new FormatException("Tile size must be >= 0.");
+    return getDefaultTileSizeX();
   }
 
   /* @see IFormatWriter#getTileSizeY() */
@@ -314,7 +325,7 @@ public abstract class FormatWriter extends FormatHandler
   public int getTileSizeY() throws FormatException {
     PositiveInteger height = metadataRetrieve.getPixelsSizeY(getSeries());
     if (height == null) throw new FormatException("Pixels Size Y must not be null when attempting to get tile size.");
-    return height.getValue();
+    return getDefaultTileSizeX();
   }
 
   /* @see IFormatWriter#setTileSizeY(int) */
@@ -322,8 +333,8 @@ public abstract class FormatWriter extends FormatHandler
   public int setTileSizeY(int tileSize) throws FormatException {
     PositiveInteger height = metadataRetrieve.getPixelsSizeY(getSeries());
     if (height == null) throw new FormatException("Pixels Size Y must not be null when attempting to set tile size.");
-    if (tileSize <= 0) throw new FormatException("Tile size must be > 0.");
-    return height.getValue();
+    if (tileSize < 0) throw new FormatException("Tile size must be >= 0.");
+    return getDefaultTileSizeY();
   }
 
   // -- IFormatHandler API methods --
@@ -490,6 +501,35 @@ public abstract class FormatWriter extends FormatHandler
 
   protected RandomAccessOutputStream createOutputStream() throws IOException {
     return new RandomAccessOutputStream(currentId);
+  }
+  
+  protected int getDefaultTileSizeY() {
+    PositiveInteger height = metadataRetrieve.getPixelsSizeY(getSeries());
+    if (height != null && legacyTiling()) {
+      return height.getValue();
+    }
+    return 0;
+  }
+  
+  protected int getDefaultTileSizeX() {
+    PositiveInteger width = metadataRetrieve.getPixelsSizeX(getSeries());
+    if (width != null && legacyTiling()) {
+      return width.getValue();
+    }
+    return 0;
+  }
+  
+  protected boolean writingTiles() {
+    return (tileSizeX != getDefaultTileSizeX() && tileSizeY != getDefaultTileSizeY());
+  }
+  
+  protected boolean legacyTiling() {
+    MetadataOptions options = getMetadataOptions();
+    if (options instanceof DynamicMetadataOptions) {
+      return ((DynamicMetadataOptions) options).getBoolean(
+        TILING_LEGACY_KEY, TILING_LEGACY_DEFAULT);
+    }
+    else return false;
   }
 
 }
