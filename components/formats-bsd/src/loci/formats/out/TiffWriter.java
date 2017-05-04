@@ -218,7 +218,7 @@ public class TiffWriter extends FormatWriter {
       ifd.put(new Integer(IFD.TILE_WIDTH), new Long(tileSizeX));
       ifd.put(new Integer(IFD.TILE_LENGTH), new Long(tileSizeY));
     }
-    if (tileSizeX < w || tileSizeY < h) {
+    if (writingTiles() && (tileSizeX < w || tileSizeY < h)) {
       int tileNo = no;
       int numTilesX = (w + (x % tileSizeX) + tileSizeX - 1) / tileSizeX;
       int numTilesY = (h + (y % tileSizeY) + tileSizeY - 1) / tileSizeY;
