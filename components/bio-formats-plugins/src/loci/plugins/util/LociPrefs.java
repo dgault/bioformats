@@ -71,6 +71,7 @@ public final class LociPrefs {
     "bioformats.leicalif.physicalsize.compatibility";
   public static final String PREF_SLICE_LABEL_PATTERN = "bioformats.sliceLabelPattern";
   public static final String PREF_SLICE_LABEL_BASE_INDEX = "bioformats.sliceLabelBaseIndex";
+  public static final String PREF_FLATTENED_RESOLUTIONS = "bioformats.useFlattenedResolutions";
   public static final String PREF_CELLSENS_FAIL =
     "bioformats.cellsens.fail_on_missing_ets";
 
@@ -204,6 +205,10 @@ public final class LociPrefs {
   
   public static int getSliceLabelBaseIndex() {
     return Prefs.getInt(PREF_SLICE_LABEL_BASE_INDEX, 1);
+  }
+  
+  public static boolean isResolutionsFalttened() {
+    return Prefs.get(PREF_FLATTENED_RESOLUTIONS, true);
   }
   
   public static boolean isCellsensFailOnMissing() {
