@@ -28,6 +28,7 @@
 package loci.plugins.in;
 
 import ij.IJ;
+import ij.Prefs;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -495,8 +496,8 @@ public class ImportProcess implements StatusReporter {
       baseReader.getMetadataOptions().setMetadataLevel(
           MetadataLevel.NO_OVERLAYS);
     }
+    baseReader.setFlattenedResolutions(LociPrefs.isResolutionsFalttened());
     baseReader.setId(options.getId());
-    
     boolean mustGroup = baseReader.fileGroupOption(options.getId()) == FormatTools.MUST_GROUP;
     options.setMustGroup(mustGroup);
   }
