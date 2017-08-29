@@ -93,7 +93,7 @@ public class ConfigWindow extends JFrame
   private JList formatsList;
   private JPanel formatInfo;
   private JTextField extensions, sliceLabel;
-  private JCheckBox enabledBox, windowlessBox, upgradeBox;
+  private JCheckBox enabledBox, windowlessBox, upgradeBox, resolutionsBox;
 
   private DefaultListModel libsListModel;
   private JList libsList;
@@ -133,6 +133,17 @@ public class ConfigWindow extends JFrame
     upgradePanel.add(upgradeBox);
 
     SpringUtilities.makeCompactGrid(upgradePanel,1, 2, PAD, PAD, PAD, PAD);
+    
+    JPanel resolutionsPanel = new JPanel(new SpringLayout());
+    JLabel resolutionsLabel = new JLabel("Use flattened resolutions");
+    resolutionsPanel.add(resolutionsLabel);
+
+    final boolean useFlattenedResolutions = LociPrefs.isResolutionsFalttened();
+    resolutionsBox = new JCheckBox("", useFlattenedResolutions);
+    resolutionsBox.addItemListener(this);
+    resolutionsPanel.add(resolutionsBox);
+
+    SpringUtilities.makeCompactGrid(resolutionsPanel,1, 2, PAD, PAD, PAD, PAD);
 
     JPanel sliceNamePanel = new JPanel(new SpringLayout());
     JLabel sliceNameLabel = new JLabel("Slice Label Pattern");
@@ -153,6 +164,7 @@ public class ConfigWindow extends JFrame
     SpringUtilities.makeCompactGrid(sliceNamePanel,1, 4, PAD, PAD, PAD, PAD);
 
     bfOptionsPanel.add(upgradePanel);
+    bfOptionsPanel.add(resolutionsPanel);
     bfOptionsPanel.add(sliceNamePanel);
     JLabel sliceDescription = new JLabel("<html>Customize the slice label by specifying a pattern string:"
                                           + "<br>%s - series index"
@@ -163,7 +175,7 @@ public class ConfigWindow extends JFrame
                                           + "<br>%t - T index"
                                           + "<br>%A - acquisition timestamp</html>");
     bfOptionsPanel.add(sliceDescription);
-    SpringUtilities.makeCompactGrid(bfOptionsPanel,3, 1, PAD, PAD, PAD, PAD);
+    SpringUtilities.makeCompactGrid(bfOptionsPanel,4, 1, PAD, PAD, PAD, PAD);
 
     JPanel installPanel = new JPanel();
     //tabs.addTab("Install", installPanel);
@@ -290,6 +302,11 @@ public class ConfigWindow extends JFrame
 
     if (src == upgradeBox) {
       Prefs.set(UPGRADE_CHECK_KEY, upgradeBox.isSelected());
+      return;
+    }
+    
+    if (src == resolutionsBox) {
+      Prefs.set(LociPrefs.PREF_FLATTENED_RESOLUTIONS, resolutionsBox.isSelected());
       return;
     }
 
