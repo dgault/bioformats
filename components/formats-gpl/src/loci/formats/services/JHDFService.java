@@ -210,4 +210,10 @@ public interface JHDFService extends Service {
      * @throws IOException If there is an error closing the file.
      */
     public void close() throws IOException;
+
+    public List<String> getAllAttributeNames(String path);
+
+    public List<String> getGroupMemberPaths(String path);
+    
+    public String getStringAttribute(String path, String attributeName);
 }

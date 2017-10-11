@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.systemsx.cisd.base.mdarray.MDIntArray;
 import loci.common.DataTools;
 import loci.common.Location;
 import loci.common.RandomAccessInputStream;
@@ -42,6 +43,8 @@ import loci.formats.FormatTools;
 import loci.formats.MetadataTools;
 import loci.formats.MissingLibraryException;
 import loci.formats.meta.MetadataStore;
+import loci.formats.services.JHDFService;
+import loci.formats.services.JHDFServiceImpl;
 import loci.formats.services.NetCDFService;
 import loci.formats.services.NetCDFServiceImpl;
 import ome.xml.model.primitives.Color;
@@ -63,7 +66,7 @@ public class ImarisHDFReader extends FormatReader {
   private double pixelSizeX, pixelSizeY, pixelSizeZ;
   private double minX, minY, minZ, maxX, maxY, maxZ;
   private int seriesCount;
-  private NetCDFService netcdf;
+  private transient JHDFService jhdf;
 
   // channel parameters
   private List<String> emWave, exWave, channelMin, channelMax;
@@ -75,7 +78,7 @@ public class ImarisHDFReader extends FormatReader {
 
   /** Constructs a new Imaris HDF reader. */
   public ImarisHDFReader() {
-    super("Bitplane Imaris 5.5 (HDF)", "ims");
+    super("Bitplane Imaris 5.5 (HDF)", new String[] {"ims", "h5"});
     suffixSufficient = false;
     domains = new String[] {FormatTools.UNKNOWN_DOMAIN};
   }
@@ -223,8 +226,10 @@ public class ImarisHDFReader extends FormatReader {
       pixelSizeX = pixelSizeY = pixelSizeZ = 0;
       minX = minY = minZ = maxX = maxY = maxZ = 0;
 
-      if (netcdf != null) netcdf.close();
-      netcdf = null;
+      if (jhdf != null) {
+        jhdf.close();
+      }
+      jhdf = null;
 
       emWave = exWave = channelMin = channelMax = null;
       gain = pinhole = channelName = microscopyMode = null;
@@ -242,8 +247,7 @@ public class ImarisHDFReader extends FormatReader {
 
     try {
       ServiceFactory factory = new ServiceFactory();
-      netcdf = factory.getInstance(NetCDFService.class);
-      netcdf.setFile(id);
+      initializeJHDFService(id);
     }
     catch (DependencyException e) {
       throw new MissingLibraryException(NetCDFServiceImpl.NO_NETCDF_MSG, e);
@@ -279,11 +283,11 @@ public class ImarisHDFReader extends FormatReader {
         String groupPath =
           "DataSet/ResolutionLevel_" + i + "/TimePoint_0/Channel_0";
         ms.sizeX =
-          Integer.parseInt(netcdf.getAttributeValue(groupPath + "/ImageSizeX"));
+          Integer.parseInt(jhdf.getMember(groupPath + "/ImageSizeX").get(0));
         ms.sizeY =
-          Integer.parseInt(netcdf.getAttributeValue(groupPath + "/ImageSizeY"));
+          Integer.parseInt(jhdf.getMember(groupPath + "/ImageSizeY").get(0));
         ms.sizeZ =
-          Integer.parseInt(netcdf.getAttributeValue(groupPath + "/ImageSizeZ"));
+          Integer.parseInt(jhdf.getMember(groupPath + "/ImageSizeZ").get(0));
         ms.imageCount = ms.sizeZ * getSizeC() * getSizeT();
         ms.sizeC = getSizeC();
         ms.sizeT = getSizeT();
@@ -431,10 +435,11 @@ public class ImarisHDFReader extends FormatReader {
   private Object getImageData(int no, int x, int y, int width, int height)
     throws FormatException
   {
+    System.out.println("GetImageData entered");
     int[] zct = getZCTCoords(no);
     String path = "/DataSet/ResolutionLevel_" + getCoreIndex() + "/TimePoint_" +
       zct[2] + "/Channel_" + zct[1] + "/Data";
-    Object image = null;
+    //Object image = null;
 
     // the width and height cannot be 1, because then netCDF will give us a
     // singleton instead of an array
@@ -467,26 +472,64 @@ public class ImarisHDFReader extends FormatReader {
 
     int[] dimensions = new int[] {1, height, width};
     int[] indices = new int[] {zct[0], y, x};
-    try {
-      image = netcdf.getArray(path, indices, dimensions);
+    // image = netcdf.getArray(path, indices, dimensions);
+    System.out.println("Attempting to read image data");
+    MDIntArray mdarray = jhdf.readIntBlockArray(path,indices, dimensions);
+    System.out.println("Retrieved image data");
+    int elementSize = jhdf.getElementSize(path);
+    if (elementSize == 1) {
+      byte[][] image = new byte[height][width];
+      System.out.println("image data byte array");
+      // Slice x, y dimension
+      for (int yy = 0; yy < height; yy++) {
+        for (int xx = 0; xx < width; xx++) {
+          image[yy][xx] = (byte) mdarray.get(0, yy, xx);
+        }
+      }
+      System.out.println("image data byte array returning");
+      return image;
     }
-    catch (ServiceException e) {
-      throw new FormatException(e);
+    else if (elementSize == 2) {
+      short[][] image = new short[height][width];
+      System.out.println("image data short array");
+      // Slice x, y dimension
+      for (int yy = 0; yy < height; yy++) {
+        for (int xx = 0; xx < width; xx++) {
+          image[yy][xx] = (short) mdarray.get(0, yy, xx);
+        }
+      }
+      System.out.println("image data short array returning");
+      return image;
     }
-    return image;
+    else {
+      int[][] image = new int[height][width];
+      System.out.println("image data int array");
+      // Slice x, y dimension
+      for (int yy = 0; yy < height; yy++) {
+        for (int xx = 0; xx < width; xx++) {
+          image[yy][xx] = (int) mdarray.get(0, yy, xx);
+        }
+      }
+      System.out.println("image data int array returning");
+      return image;
+    }
   }
 
-  private void parseAttributes() {
-    final List<String> attributes = netcdf.getAttributeList();
+  private synchronized void parseAttributes() {
+    final List<String> attributes = jhdf.getAllAttributeNames("/");
+    System.out.println("Retrieved all attributes");
     CoreMetadata ms0 = core.get(0);
 
     for (String attr : attributes) {
+      System.out.println("Checking attribute: " + attr);
       String name = attr.substring(attr.lastIndexOf("/") + 1);
-      String value = netcdf.getAttributeValue(attr);
-      if (value == null) continue;
+      String path = attr.substring(0, attr.lastIndexOf("/"));
+      String value = jhdf.getStringAttribute(path,name);
+      System.out.println("Got value: " + value);
+      if (value == null || value.isEmpty()) continue;
       value = value.trim();
 
-      if (name.equals("X") || (attr.startsWith("DataSet/ResolutionLevel_0") && name.equals("ImageSizeX"))) {
+      if (name.equals("X") || (path.startsWith("DataSet/ResolutionLevel_0") && name.equals("ImageSizeX"))) {
         try {
           ms0.sizeX = Integer.parseInt(value);
         }
@@ -494,7 +537,7 @@ public class ImarisHDFReader extends FormatReader {
           LOGGER.trace("Failed to parse '" + name + "'", e);
         }
       }
-      else if (name.equals("Y") || (attr.startsWith("DataSet/ResolutionLevel_0") && name.equals("ImageSizeY"))) {
+      else if (name.equals("Y") || (path.startsWith("DataSet/ResolutionLevel_0") && name.equals("ImageSizeY"))) {
         try {
           ms0.sizeY = Integer.parseInt(value);
         }
@@ -502,7 +545,7 @@ public class ImarisHDFReader extends FormatReader {
           LOGGER.trace("Failed to parse '" + name + "'", e);
         }
       }
-      else if (name.equals("Z") || (attr.startsWith("DataSet/ResolutionLevel_0") && name.equals("ImageSizeZ"))) {
+      else if (name.equals("Z") || (path.startsWith("DataSet/ResolutionLevel_0") && name.equals("ImageSizeZ"))) {
         try {
           ms0.sizeZ = Integer.parseInt(value);
         }
@@ -532,14 +575,14 @@ public class ImarisHDFReader extends FormatReader {
       else if (name.equals("ExtMin1")) minY = Double.parseDouble(value);
       else if (name.equals("ExtMin2")) minZ = Double.parseDouble(value);
 
-      if (attr.startsWith("DataSet/ResolutionLevel_")) {
+      if (path.startsWith("DataSet/ResolutionLevel_")) {
         int slash = attr.indexOf("/", 24);
         int n = Integer.parseInt(attr.substring(24, slash == -1 ?
           attr.length() : slash));
         if (n >= seriesCount) seriesCount = n + 1;
       }
 
-      if (attr.startsWith("DataSetInfo/Channel_")) {
+      if (path.startsWith("DataSetInfo/Channel_")) {
         String originalValue = value;
         for (String d : DELIMITERS) {
           if (value.indexOf(d) != -1) {
@@ -572,6 +615,17 @@ public class ImarisHDFReader extends FormatReader {
       }
 
       if (value != null) addGlobalMeta(name, value);
+    }
+    System.out.println("Parse attributes complete");
+  }
+  
+  private void initializeJHDFService(String id) throws IOException, MissingLibraryException {
+    try {
+      ServiceFactory factory = new ServiceFactory();
+      jhdf = factory.getInstance(JHDFService.class);
+      jhdf.setFile(id);
+    } catch (DependencyException e) {
+      throw new MissingLibraryException(JHDFServiceImpl.NO_JHDF_MSG, e);
     }
   }
 

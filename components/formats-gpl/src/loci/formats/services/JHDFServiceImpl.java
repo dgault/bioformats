@@ -34,6 +34,8 @@ import ch.systemsx.cisd.base.mdarray.MDByteArray;
 import ch.systemsx.cisd.base.mdarray.MDIntArray;
 import ch.systemsx.cisd.base.mdarray.MDShortArray;
 import ch.systemsx.cisd.hdf5.HDF5CompoundDataMap;
+import ch.systemsx.cisd.hdf5.HDF5DataClass;
+import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.HDF5IntStorageFeatures;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
@@ -249,7 +251,53 @@ public class JHDFServiceImpl extends AbstractService
      * @see loci.formats.JHDFService#exists()
      */
     public boolean exists(String path) {
+      
         return hdfReader.exists(path);
+    }
+    
+    public List<String> getAllAttributeNames(String path) {
+     // System.out.println("Getting attribute names: " + path);
+      List<String> returnList = hdfReader.getAllAttributeNames(path);
+      for (int i = 0; i < returnList.size(); i ++) {
+        String modified = path + "/" + returnList.get(i);
+        returnList.set(i, modified);
+      }
+     // System.out.println("Added attributes: " + path);
+      if (hdfReader.isGroup(path)) {
+        for (String group : getGroupMemberPaths(path)) {
+       //   System.out.println("Getting names from group: " + group);
+          returnList.addAll(getAllAttributeNames(group));
+        }
+      }
+      return returnList;
+    }
+    
+    public List<String> getGroupMemberPaths(String path) {
+      return hdfReader.getGroupMemberPaths(path);
+    }
+    
+    public synchronized String getStringAttribute(String path, String attributeName) {
+      HDF5DataTypeInformation attributeInfo = hdfReader.getAttributeInformation(path, attributeName);
+      HDF5DataClass classType = attributeInfo.getDataClass();
+
+      String returnValue;
+      if (classType == HDF5DataClass.STRING) {
+        boolean hasAttribute = hdfReader.hasAttribute(path, attributeName);
+        returnValue = hdfReader.getStringAttribute(path, attributeName);
+      }
+      else if (classType == HDF5DataClass.INTEGER) {
+        returnValue = "" + hdfReader.getIntAttribute(path, attributeName);
+      }
+      else if (classType == HDF5DataClass.FLOAT) {
+        returnValue = "" + hdfReader.getFloatAttribute(path, attributeName);
+      }
+      else if (classType == HDF5DataClass.BOOLEAN) {
+        returnValue = "" + hdfReader.getBooleanAttribute(path, attributeName);
+      }
+      else {
+        returnValue = null;
+      }
+      return returnValue;
     }
 
     /* (non-Javadoc)
