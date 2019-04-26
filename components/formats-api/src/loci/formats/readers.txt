@@ -18,6 +18,7 @@ loci.formats.in.SlideBook6Reader[type=external]      # sld
 loci.formats.in.ScreenReader[type=external]         # .screen
 
 # standalone readers with unique file extensions
+loci.formats.in.OmeroPixelsPyramidReader # omero
 loci.formats.in.PGMReader             # pgm
 loci.formats.in.FitsReader            # fits
 loci.formats.in.PCXReader             # pcx
