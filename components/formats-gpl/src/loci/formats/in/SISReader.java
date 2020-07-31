@@ -171,7 +171,7 @@ public class SISReader extends BaseTiffReader {
 
     in.skipBytes(6);
 
-    imageName = in.readCString();
+    imageName = in.readCString().trim();
     if ((in.getFilePointer() % 2) == 1) {
       in.skipBytes(1);
     }
@@ -207,7 +207,7 @@ public class SISReader extends BaseTiffReader {
 
     magnification = in.readDouble();
     int cameraNameLength = in.readShort();
-    channelName = in.readCString();
+    channelName = in.readCString().trim();
 
     if (channelName.length() > 128) {
       channelName = "";
