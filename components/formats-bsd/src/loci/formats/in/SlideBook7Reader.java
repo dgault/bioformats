@@ -516,16 +516,12 @@ public class SlideBook7Reader  extends FormatReader {
                     // check if directroy is empty - no ImageRecord.yaml file or binary files
                     File theImgRecFile = new File(theDir + File.separator + kImageRecordFilename);
                     if(!theImgRecFile.exists()) return false;
-                    File [] theFiles = new File(theDir).listFiles(new FileFilter() {
-                        @Override
-                        public boolean accept(File file) {
-                            String thePath = file.getAbsolutePath();
-                            if(thePath.endsWith(kBinaryFileSuffix)) return true;
-                            else return false;
-                        }
-                    });
-                    if(theFiles.length == 0) return false;
-                    return true;
+                    File [] theFiles = new File(theDir).listFiles();
+                    for (File innerFile: theFiles) {
+                      String thePath = innerFile.getAbsolutePath();
+                      if(thePath.endsWith(kBinaryFileSuffix)) return true;
+                    }
+                    return false;
                 }
             });
             String []theTitles = new String[theDirectories.length];
@@ -1527,7 +1523,7 @@ public class SlideBook7Reader  extends FormatReader {
         public Integer mSequenceId; // path id
         public Integer mObjectId; // mask or submask id
         public Integer mDependencyRef; // association with object dependencies
-        public Integer mVersion;		// Identifies the version of the structure
+        public Integer mVersion;    // Identifies the version of the structure
         public Integer mByteOrdering;
         public CSBPoint <Double> mFieldOffsetMicrons;
         public Double mFieldMicronsPerPixel;
@@ -1607,11 +1603,11 @@ public class SlideBook7Reader  extends FormatReader {
         public Integer mStructVersion;
         public Integer mByteOrdering;
         public Integer mStructLen;
-        public Integer mNumPlanes;	
+        public Integer mNumPlanes;  
         public Integer mNumManip;
         public Integer mManipPtr;
         public Integer mDataType;
-        public Integer mDataTablePtr;	
+        public Integer mDataTablePtr; 
         public Integer mHistogramTablePtr;
         public Integer mHistogramSummaryPtr;
 
@@ -1708,12 +1704,12 @@ public class SlideBook7Reader  extends FormatReader {
         public Integer mXFactor;
         public Integer mYFactor;
         public Integer mNumPlanes;
-        public Integer mNuTSACSampleSize;	// number of planes per sample in a SA sweep.
-        public Boolean mScanning;		// was this taken using a scanning system (e.g., Vivo 2-Photon)?
+        public Integer mNuTSACSampleSize; // number of planes per sample in a SA sweep.
+        public Boolean mScanning;   // was this taken using a scanning system (e.g., Vivo 2-Photon)?
         public Float mInterplaneSpacing;
         public Float mInitialOffset;
         public Integer mTimeLapseInterval;
-        public Integer mCaptureSetId;	// unique capture id
+        public Integer mCaptureSetId; // unique capture id
         public Float mXStartPosition;
         public Float mYStartPosition;
         public Float mZStartPosition;
@@ -1837,7 +1833,7 @@ public class SlideBook7Reader  extends FormatReader {
         public Integer mStructID;
         public Integer mStructVersion;
         public Integer mByteOrdering;
-        public Integer mStructLen;		// 256 bytes + variable vector of mDataBlockSize bytes (should be less than 64KB)
+        public Integer mStructLen;    // 256 bytes + variable vector of mDataBlockSize bytes (should be less than 64KB)
         public Integer mMin;
         public Integer mMax;
         public Float mMean; // 4-byte float for 'mean' is same as return of CImageSet::ComputeStDev
@@ -2272,19 +2268,19 @@ public class SlideBook7Reader  extends FormatReader {
 
     DataLoader mDataLoader;
 
-	// -- Constructor --
+  // -- Constructor --
 
-	public SlideBook7Reader() {
-		super("SlideBook 7 SLD (native)", new String[] {"sldy"});
-		domains = new String[] {FormatTools.LM_DOMAIN};
-		suffixSufficient = false;
+  public SlideBook7Reader() {
+    super("SlideBook 7 SLD (native)", new String[] {"sldy"});
+    domains = new String[] {FormatTools.LM_DOMAIN};
+    suffixSufficient = false;
         LOGGER.trace(" LOGGER.trace SlideBook7Reader: Constructed\n");
-	}
+  }
 
-	// -- IFormatReader API methods --
+  // -- IFormatReader API methods --
 
-	/* @see loci.formats.IFormatReader#isThisType(RandomAccessInputStream) */
-	public boolean isThisType(RandomAccessInputStream stream) throws IOException {
+  /* @see loci.formats.IFormatReader#isThisType(RandomAccessInputStream) */
+  public boolean isThisType(RandomAccessInputStream stream) throws IOException {
         try {
             if(mDataLoader == null) return false;
             Boolean res = mDataLoader.ReadSld(stream);
@@ -2296,11 +2292,11 @@ public class SlideBook7Reader  extends FormatReader {
         }
         SlideBook7Reader.LOGGER.trace("SlideBook7Reader: isThisType - stream: returning false");
 
-		return false;
-	}
+    return false;
+  }
 
-	/* @see loci.formats.IFormatReader#isThisType(String, boolean) */
-	public boolean isThisType(String file, boolean open) {
+  /* @see loci.formats.IFormatReader#isThisType(String, boolean) */
+  public boolean isThisType(String file, boolean open) {
         try {
             String mytestfile = file;
             SlideBook7Reader.LOGGER.trace("SlideBook7Reader: isThisType - String - open: " + open);
@@ -2330,62 +2326,62 @@ public class SlideBook7Reader  extends FormatReader {
 
         SlideBook7Reader.LOGGER.trace("SlideBook7Reader: isThisType - String: return false " );
 
-		return false;
-	}
+    return false;
+  }
 
-	/**
-	 * @see loci.formats.IFormatReader#openBytes(int, byte[], int, int, int, int)
-	 */
-	public byte[] openBytes(int no, byte[] buf, int x, int y, int w, int h)
-			throws FormatException, IOException
-	{
+  /**
+   * @see loci.formats.IFormatReader#openBytes(int, byte[], int, int, int, int)
+   */
+  public byte[] openBytes(int no, byte[] buf, int x, int y, int w, int h)
+      throws FormatException, IOException
+  {
     if(mDataLoader == null) return buf;
-		FormatTools.checkPlaneParameters(this, no, buf.length, x, y, w, h);
+    FormatTools.checkPlaneParameters(this, no, buf.length, x, y, w, h);
 
-		int[] zct = FormatTools.getZCTCoords(this, no);
-		int bpc = FormatTools.getBytesPerPixel(getPixelType());
+    int[] zct = FormatTools.getZCTCoords(this, no);
+    int bpc = FormatTools.getBytesPerPixel(getPixelType());
         int thePlaneSize = FormatTools.getPlaneSize(this);
-		byte[] b = new byte[thePlaneSize*2];
+    byte[] b = new byte[thePlaneSize*2];
 
-		mDataLoader.ReadPlane(getSeries(),b, 0, zct[2], zct[0], zct[1]);
+    mDataLoader.ReadPlane(getSeries(),b, 0, zct[2], zct[0], zct[1]);
 
-		int pixel = bpc * getRGBChannelCount();
-		int rowLen = w * pixel;
-		for (int row=0; row<h; row++) {
-			System.arraycopy(b, pixel * ((row + y) * getSizeX() + x), buf,
-					row * rowLen, rowLen);
-		}
+    int pixel = bpc * getRGBChannelCount();
+    int rowLen = w * pixel;
+    for (int row=0; row<h; row++) {
+      System.arraycopy(b, pixel * ((row + y) * getSizeX() + x), buf,
+          row * rowLen, rowLen);
+    }
 
-		if (isRGB()) {
-			int bpp = getSizeC() * bpc;
-			int line = w * bpp;
-			for (int row=0; row<h; row++) {
-				for (int col=0; col<w; col++) {
-					int base = row * line + col * bpp;
-					for (int bb=0; bb<bpc; bb++) {
-						byte blue = buf[base + bpc*(getSizeC() - 1) + bb];
-						buf[base + bpc*(getSizeC() - 1) + bb] = buf[base + bb];
-						buf[base + bb] = blue;
-					}
-				}
-			}
-		}
-		return buf;
-	}
+    if (isRGB()) {
+      int bpp = getSizeC() * bpc;
+      int line = w * bpp;
+      for (int row=0; row<h; row++) {
+        for (int col=0; col<w; col++) {
+          int base = row * line + col * bpp;
+          for (int bb=0; bb<bpc; bb++) {
+            byte blue = buf[base + bpc*(getSizeC() - 1) + bb];
+            buf[base + bpc*(getSizeC() - 1) + bb] = buf[base + bb];
+            buf[base + bb] = blue;
+          }
+        }
+      }
+    }
+    return buf;
+  }
 
-	// -- Internal FormatReader API methods --
-	public void close(boolean fileOnly) throws IOException {
-		super.close(fileOnly);
+  // -- Internal FormatReader API methods --
+  public void close(boolean fileOnly) throws IOException {
+    super.close(fileOnly);
     if(mDataLoader == null) return;
     mDataLoader.CloseFile();
     mDataLoader = null;
   }
 
-	/* @see loci.formats.FormatReader#initFile(String) */
-	protected void initFile(String id) throws FormatException, IOException {
-		super.initFile(id);
+  /* @see loci.formats.FormatReader#initFile(String) */
+  protected void initFile(String id) throws FormatException, IOException {
+    super.initFile(id);
 
-		try {
+    try {
             if(mDataLoader == null) mDataLoader  = new DataLoader(Location.getMappedId(id));
             Boolean res; 
             res = mDataLoader.LoadMetadata();
@@ -2395,181 +2391,181 @@ public class SlideBook7Reader  extends FormatReader {
                 throw new FormatException("Could not load metadata", e);
             }
 
-			// read basic meta data
-			int numCaptures = mDataLoader.GetNumCaptures();
-			int[] numPositions = new int[numCaptures];
-			int[] numTimepoints = new int[numCaptures];
-			int[] numZPlanes = new int[numCaptures];
-			int[] numChannels = new int[numCaptures];
-			for (int capture=0; capture < numCaptures; capture++) {
+      // read basic meta data
+      int numCaptures = mDataLoader.GetNumCaptures();
+      int[] numPositions = new int[numCaptures];
+      int[] numTimepoints = new int[numCaptures];
+      int[] numZPlanes = new int[numCaptures];
+      int[] numChannels = new int[numCaptures];
+      for (int capture=0; capture < numCaptures; capture++) {
                 CImageGroup theCurrentImageGroup = mDataLoader.GetImageGroup(capture);
 
-				numPositions[capture] = theCurrentImageGroup.GetNumPositions();
-				numTimepoints[capture] = theCurrentImageGroup.GetNumTimepoints() / numPositions[capture];
-				numZPlanes[capture] = theCurrentImageGroup.GetNumPlanes();
-				numChannels[capture] = theCurrentImageGroup.GetNumChannels();
+        numPositions[capture] = theCurrentImageGroup.GetNumPositions();
+        numTimepoints[capture] = theCurrentImageGroup.GetNumTimepoints() / numPositions[capture];
+        numZPlanes[capture] = theCurrentImageGroup.GetNumPlanes();
+        numChannels[capture] = theCurrentImageGroup.GetNumChannels();
                 SlideBook7Reader.LOGGER.trace("capture: "+capture);
                 SlideBook7Reader.LOGGER.trace("numPositions[capture]: "+numPositions[capture]);
                 SlideBook7Reader.LOGGER.trace("numTimepoints[capture]: "+numTimepoints[capture]);
                 SlideBook7Reader.LOGGER.trace("numZPlanes[capture]: "+numZPlanes[capture]);
                 SlideBook7Reader.LOGGER.trace("numChannels[capture]: "+numChannels[capture]);
-			}
+      }
 
-			core.clear();
+      core.clear();
 
-			// set up basic meta data
-			for (int capture=0; capture < numCaptures; capture++) {
+      // set up basic meta data
+      for (int capture=0; capture < numCaptures; capture++) {
                 CImageGroup theCurrentImageGroup = mDataLoader.GetImageGroup(capture);
-				CoreMetadata ms = new CoreMetadata();
-				core.add(ms);
-				setSeries(capture);
-				ms.sizeX = theCurrentImageGroup.GetNumColumns();
-				//if (ms.sizeX % 2 != 0) ms.sizeX++;
-				ms.sizeY = theCurrentImageGroup.GetNumRows();
+        CoreMetadata ms = new CoreMetadata();
+        core.add(ms);
+        setSeries(capture);
+        ms.sizeX = theCurrentImageGroup.GetNumColumns();
+        //if (ms.sizeX % 2 != 0) ms.sizeX++;
+        ms.sizeY = theCurrentImageGroup.GetNumRows();
                 SlideBook7Reader.LOGGER.trace("ms.sizeX: "+ms.sizeX);
                 SlideBook7Reader.LOGGER.trace("ms.sizeY: "+ms.sizeY);
-				ms.sizeZ = numZPlanes[capture];
-				ms.sizeT = numTimepoints[capture] * numPositions[capture]; 
-				ms.sizeC = numChannels[capture];
+        ms.sizeZ = numZPlanes[capture];
+        ms.sizeT = numTimepoints[capture] * numPositions[capture]; 
+        ms.sizeC = numChannels[capture];
                 SlideBook7Reader.LOGGER.trace("ms.sizeT: "+ms.sizeT);
                 SlideBook7Reader.LOGGER.trace("ms.sizeC: "+ms.sizeC);
-				int bytes = theCurrentImageGroup.GetBytesPerPixel();
+        int bytes = theCurrentImageGroup.GetBytesPerPixel();
                 SlideBook7Reader.LOGGER.trace("initFile: bytes: " + bytes);
-				if (bytes % 3 == 0) {
-					ms.sizeC *= 3;
-					bytes /= 3;
-					ms.rgb = true;
-				}
-				else ms.rgb = false;
+        if (bytes % 3 == 0) {
+          ms.sizeC *= 3;
+          bytes /= 3;
+          ms.rgb = true;
+        }
+        else ms.rgb = false;
 
-				ms.pixelType = FormatTools.pixelTypeFromBytes(bytes, false, true);
+        ms.pixelType = FormatTools.pixelTypeFromBytes(bytes, false, true);
                 SlideBook7Reader.LOGGER.trace("initFile: ms.pixelType: " + ms.pixelType);
-				ms.imageCount = ms.sizeZ * ms.sizeT;
-				if (!ms.rgb) 
-					ms.imageCount *= ms.sizeC;
-				ms.interleaved = true;
-				ms.littleEndian = true;
-				ms.dimensionOrder = "XYCZT";
-				ms.indexed = false;
-				ms.falseColor = false;
-			}
-			setSeries(0);
+        ms.imageCount = ms.sizeZ * ms.sizeT;
+        if (!ms.rgb) 
+          ms.imageCount *= ms.sizeC;
+        ms.interleaved = true;
+        ms.littleEndian = true;
+        ms.dimensionOrder = "XYCZT";
+        ms.indexed = false;
+        ms.falseColor = false;
+      }
+      setSeries(0);
 
-			// fill in meta data
-			MetadataStore store = makeFilterMetadata();
-			MetadataTools.populatePixels(store, this, true);
+      // fill in meta data
+      MetadataStore store = makeFilterMetadata();
+      MetadataTools.populatePixels(store, this, true);
 
-			// add extended meta data
-			if (getMetadataOptions().getMetadataLevel() != MetadataLevel.MINIMUM) {
-				
-				// set instrument information
-				String instrumentID = MetadataTools.createLSID("Instrument", 0);
-				store.setInstrumentID(instrumentID, 0);
+      // add extended meta data
+      if (getMetadataOptions().getMetadataLevel() != MetadataLevel.MINIMUM) {
+        
+        // set instrument information
+        String instrumentID = MetadataTools.createLSID("Instrument", 0);
+        store.setInstrumentID(instrumentID, 0);
 
-				// set up extended meta data
-				for (int capture=0; capture < numCaptures; capture++) {
+        // set up extended meta data
+        for (int capture=0; capture < numCaptures; capture++) {
           CImageGroup theCurrentImageGroup = mDataLoader.GetImageGroup(capture);
-					// link Instrument and Image
-					store.setImageInstrumentRef(instrumentID, capture);
+          // link Instrument and Image
+          store.setImageInstrumentRef(instrumentID, capture);
 
-					// set image name
-					String imageName = theCurrentImageGroup.GetName();
-					store.setImageName(imageName, capture);
+          // set image name
+          String imageName = theCurrentImageGroup.GetName();
+          store.setImageName(imageName, capture);
 
-					// set description
-					String imageDescription = theCurrentImageGroup.GetInfo();
-					store.setImageDescription(imageDescription, capture);
+          // set description
+          String imageDescription = theCurrentImageGroup.GetInfo();
+          store.setImageDescription(imageDescription, capture);
 
-					// set voxel size per image (microns)
-					double voxelsize = theCurrentImageGroup.GetVoxelSize();
+          // set voxel size per image (microns)
+          double voxelsize = theCurrentImageGroup.GetVoxelSize();
           SlideBook7Reader.LOGGER.trace("initFile: voxelsize: " + voxelsize);
-					Length physicalSizeX = FormatTools.getPhysicalSizeX(voxelsize);
-					Length physicalSizeY = FormatTools.getPhysicalSizeY(voxelsize);
-					if (physicalSizeX != null) {
-						store.setPixelsPhysicalSizeX(physicalSizeX, capture);
-					}
-					if (physicalSizeY != null) {
-						store.setPixelsPhysicalSizeY(physicalSizeY, capture);
-					}
+          Length physicalSizeX = FormatTools.getPhysicalSizeX(voxelsize);
+          Length physicalSizeY = FormatTools.getPhysicalSizeY(voxelsize);
+          if (physicalSizeX != null) {
+            store.setPixelsPhysicalSizeX(physicalSizeX, capture);
+          }
+          if (physicalSizeY != null) {
+            store.setPixelsPhysicalSizeY(physicalSizeY, capture);
+          }
           SlideBook7Reader.LOGGER.trace("initFile: physicalSizeX: " + physicalSizeX);
           SlideBook7Reader.LOGGER.trace("initFile: physicalSizeY: " + physicalSizeY);
-					double stepSize = 0;
-					if (numZPlanes[capture] > 1) {
-						stepSize = theCurrentImageGroup.GetInterplaneSpacing();
-					}
+          double stepSize = 0;
+          if (numZPlanes[capture] > 1) {
+            stepSize = theCurrentImageGroup.GetInterplaneSpacing();
+          }
           SlideBook7Reader.LOGGER.trace("initFile: stepSize: " + stepSize);
 
-					Length physicalSizeZ = FormatTools.getPhysicalSizeZ(stepSize);
-					if (physicalSizeZ != null) {
-						store.setPixelsPhysicalSizeZ(physicalSizeZ, capture);
-					}
+          Length physicalSizeZ = FormatTools.getPhysicalSizeZ(stepSize);
+          if (physicalSizeZ != null) {
+            store.setPixelsPhysicalSizeZ(physicalSizeZ, capture);
+          }
 
-					int imageIndex = 0;
-					// if numPositions[capture] > 1 then we have a montage
-					for (int timepoint = 0; timepoint < numTimepoints[capture]; timepoint++) {
-						int deltaT = theCurrentImageGroup.GetElapsedTime(timepoint);
-						for (int position = 0; position < numPositions[capture]; position++) {
-							for (int zplane = 0; zplane < numZPlanes[capture]; zplane++) {
-								for (int channel = 0; channel < numChannels[capture]; channel++, imageIndex++) {
-									// set elapsed time
-									store.setPlaneDeltaT(new Time(deltaT, UNITS.MILLISECOND), capture, imageIndex);
+          int imageIndex = 0;
+          // if numPositions[capture] > 1 then we have a montage
+          for (int timepoint = 0; timepoint < numTimepoints[capture]; timepoint++) {
+            int deltaT = theCurrentImageGroup.GetElapsedTime(timepoint);
+            for (int position = 0; position < numPositions[capture]; position++) {
+              for (int zplane = 0; zplane < numZPlanes[capture]; zplane++) {
+                for (int channel = 0; channel < numChannels[capture]; channel++, imageIndex++) {
+                  // set elapsed time
+                  store.setPlaneDeltaT(new Time(deltaT, UNITS.MILLISECOND), capture, imageIndex);
 
-									// set exposure time
-									int expTime = theCurrentImageGroup.GetExposureTime(channel);
-									store.setPlaneExposureTime(new Time(new Double(expTime), UNITS.MILLISECOND), capture, imageIndex);
+                  // set exposure time
+                  int expTime = theCurrentImageGroup.GetExposureTime(channel);
+                  store.setPlaneExposureTime(new Time(new Double(expTime), UNITS.MILLISECOND), capture, imageIndex);
 
-									// set tile xy position
-									double numberX = theCurrentImageGroup.GetXPosition( position);
-									Length positionX = new Length(numberX, UNITS.MICROMETRE);
+                  // set tile xy position
+                  double numberX = theCurrentImageGroup.GetXPosition( position);
+                  Length positionX = new Length(numberX, UNITS.MICROMETRE);
                   SlideBook7Reader.LOGGER.trace("initFile: positionX: " + numberX);
-									store.setPlanePositionX(positionX, capture, imageIndex);
-									double numberY = theCurrentImageGroup.GetYPosition(position);
-									Length positionY = new Length(numberY, UNITS.MICROMETRE);
-									store.setPlanePositionY(positionY, capture, imageIndex);
+                  store.setPlanePositionX(positionX, capture, imageIndex);
+                  double numberY = theCurrentImageGroup.GetYPosition(position);
+                  Length positionY = new Length(numberY, UNITS.MICROMETRE);
+                  store.setPlanePositionY(positionY, capture, imageIndex);
                   SlideBook7Reader.LOGGER.trace("initFile: positionY: " + numberY);
 
-									// set tile z position
-									double positionZ = theCurrentImageGroup.GetZPosition(position, zplane);
-									Length zPos = new Length(positionZ, UNITS.MICROMETRE);
-									store.setPlanePositionZ(zPos, capture, imageIndex);
+                  // set tile z position
+                  double positionZ = theCurrentImageGroup.GetZPosition(position, zplane);
+                  Length zPos = new Length(positionZ, UNITS.MICROMETRE);
+                  store.setPlanePositionZ(zPos, capture, imageIndex);
                   SlideBook7Reader.LOGGER.trace("initFile: positionZ: " + positionZ);
-								}
-							}
-						}
-					}
+                }
+              }
+            }
+          }
 
-					// set channel names
-					for (int channel = 0; channel < numChannels[capture]; channel++) {
-						String theChannelName = theCurrentImageGroup.GetChannelName(channel);
-						store.setChannelName(theChannelName.trim(), capture, channel);
-					}
-				}
+          // set channel names
+          for (int channel = 0; channel < numChannels[capture]; channel++) {
+            String theChannelName = theCurrentImageGroup.GetChannelName(channel);
+            store.setChannelName(theChannelName.trim(), capture, channel);
+          }
+        }
 
-				// populate Objective data
-				int objectiveIndex = 0;
-				for (int capture = 0; capture < numCaptures; capture++) {
+        // populate Objective data
+        int objectiveIndex = 0;
+        for (int capture = 0; capture < numCaptures; capture++) {
           CImageGroup theCurrentImageGroup = mDataLoader.GetImageGroup(capture);
-					// link Objective to Image
-					String objectiveID = MetadataTools.createLSID("Objective", 0, objectiveIndex);
-					store.setObjectiveID(objectiveID, 0, objectiveIndex);
-					store.setObjectiveSettingsID(objectiveID, capture);
+          // link Objective to Image
+          String objectiveID = MetadataTools.createLSID("Objective", 0, objectiveIndex);
+          store.setObjectiveID(objectiveID, 0, objectiveIndex);
+          store.setObjectiveSettingsID(objectiveID, capture);
 
-					String objective = theCurrentImageGroup.GetLensName();
-					if (objective != null) {
-						store.setObjectiveModel(objective, 0, objectiveIndex);
-					}
-					store.setObjectiveCorrection(MetadataTools.getCorrection("Other"), 0, objectiveIndex);
-					store.setObjectiveImmersion(MetadataTools.getImmersion("Other"), 0, objectiveIndex);
-					double magnification = theCurrentImageGroup.GetMagnification();
-					if (magnification > 0) {
-						store.setObjectiveNominalMagnification(magnification, 0, objectiveIndex);
-					}
-					objectiveIndex++;
-				}
-			}
-		}
-		catch (Exception e) {
+          String objective = theCurrentImageGroup.GetLensName();
+          if (objective != null) {
+            store.setObjectiveModel(objective, 0, objectiveIndex);
+          }
+          store.setObjectiveCorrection(MetadataTools.getCorrection("Other"), 0, objectiveIndex);
+          store.setObjectiveImmersion(MetadataTools.getImmersion("Other"), 0, objectiveIndex);
+          double magnification = theCurrentImageGroup.GetMagnification();
+          if (magnification > 0) {
+            store.setObjectiveNominalMagnification(magnification, 0, objectiveIndex);
+          }
+          objectiveIndex++;
+        }
+      }
+    }
+    catch (Exception e) {
       e.printStackTrace();
-		}
-	}
+    }
+  }
 }
