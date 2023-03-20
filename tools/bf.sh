@@ -24,7 +24,7 @@ fi
 if [ -z "$BF_MAX_MEM" ]
 then
   # Set a reasonable default max heap size.
-  BF_MAX_MEM="512m"
+  BF_MAX_MEM="4G"
 fi
 BF_FLAGS="$BF_FLAGS -Xmx$BF_MAX_MEM"
 
@@ -55,6 +55,10 @@ then
   java $BF_FLAGS $BF_PROG "$@"
 else
   # Developer environment variable unset; add JAR libraries to classpath.
+  if [ -e "$BF_JAR_DIR/OMEZarrReader.jar" ]
+  then
+    BF_CP="$BF_JAR_DIR/OMEZarrReader.jar:$BF_CP"
+  fi
   if [ -e "$BF_JAR_DIR/bioformats_package.jar" ]
   then
     BF_CP="$BF_JAR_DIR/bioformats_package.jar:$BF_CP"
