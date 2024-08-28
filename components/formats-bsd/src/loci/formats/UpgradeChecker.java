@@ -111,7 +111,7 @@ public class UpgradeChecker {
   };
 
   /** Location of the OME registry. */
-  public static final String REGISTRY = "http://upgrade.openmicroscopy.org.uk";
+  public static final String REGISTRY = "http://www.openmicroscopy.org/qa3/registry/hit";
 
   /** Value of "bioformats.caller" for Bio-Formats utilities. */
   public static final String DEFAULT_CALLER = "Bio-Formats utilities";
@@ -198,28 +198,28 @@ public class UpgradeChecker {
     final StringBuilder query = new StringBuilder(REGISTRY);
     for (int i=0; i<REGISTRY_PROPERTIES.length; i++) {
       if (i == 0) {
-        query.append("?");
+       // query.append("?");
       }
       else {
-        query.append(";");
+    //    query.append(";");
       }
 
-      query.append(REGISTRY_PROPERTIES[i]);
-      query.append("=");
+     // query.append(REGISTRY_PROPERTIES[i]);
+     // query.append("=");
 
       if (i == 0) {
-        query.append(FormatTools.VERSION);
+       // query.append(FormatTools.VERSION);
       }
-      else {
-        try {
-          query.append(URLEncoder.encode(
-            System.getProperty(REGISTRY_PROPERTIES[i]), "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e) {
-          LOGGER.warn("Failed to append query argument: " +
-            REGISTRY_PROPERTIES[i], e);
-        }
-      }
+//      else {
+//        try {
+//          //query.append(URLEncoder.encode(
+//          //  System.getProperty(REGISTRY_PROPERTIES[i]), "UTF-8"));
+//        }
+//        catch (UnsupportedEncodingException e) {
+//          LOGGER.warn("Failed to append query argument: " +
+//            REGISTRY_PROPERTIES[i], e);
+//        }
+//      }
     }
 
     System.setProperty(UPGRADE_CHECK_PROPERTY, "true");
